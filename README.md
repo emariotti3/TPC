@@ -6,12 +6,12 @@
 * [Sofía Morseletto](https://github.com/sofiamorseletto)
 * [María Eugenia Mariotti](https://github.com/emariotti3)
 
-###Dependencies
+### Dependencies
 	- Rust
 	- Cargo
 
-###Build
+### Build
 	> cargo build
 
-###Run
+### Run
 	> cargo run
