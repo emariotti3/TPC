@@ -9,24 +9,23 @@ mod network;
 use network::observatory::{Observatory};
 
 fn main() {
-    let observatory_count = 10;
-    let mut handles = Vec::new();
+    let observatory_count = 3;
+    let mut observatories = Vec::new();
     let mut avg_times = Vec::new();
-    let file = File::open("hola.txt").expect("file not found");;
+    let mut running = Arc::new(Mutex::new(true));
+    let file = File::open("src/hola.txt").expect("file not found");;
     let mut j = 0;
 
     for line in BufReader::new(file).lines() {
         avg_times.push(Arc::new(Mutex::new(0.0)));
         let avg_time = Arc::clone(&avg_times[j]);
 
-        let handle = thread::spawn(move || {
-            
-            let mut obs = Observatory::new(avg_time);
-            obs.parse_line(&line.unwrap());
-            obs.add(j as f64);
-            println!("observatory {} : {}", j, obs.get_avg_time());
-        });
-        handles.push(handle);
+        let mut obs = Observatory::new(j, avg_time, &running, "");
+        obs.parse_line(&line.unwrap());
+        obs.add(j as f64);
+        println!("observatory {} : {}", j, obs.get_avg_time());
+
+        observatories.push(obs);
         j += 1;
     }
 
@@ -43,10 +42,13 @@ fn main() {
             .expect("Wanted a valid string!");
 
         if user_input.to_lowercase() == "q" {
-            for handle in handles {
-                handle.join().unwrap();
+            {
+                let mut running_val = running.lock().unwrap();
+                *running_val = false;
             }
-            println!("Goodbye!");
+            for mut obs in observatories {
+                obs.graceful_quit();
+            }
             return;
         }
 
