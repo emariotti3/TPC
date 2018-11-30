@@ -8,7 +8,7 @@ use network::observatory::{Observatory};
 
 fn main() {
     let observatory_count = 10;
-    let mut handles = Vec::new();
+    let mut observatories = Vec::new();
     let mut avg_times = Vec::new();
 
     for _ in 0..observatory_count {
@@ -17,13 +17,9 @@ fn main() {
 
     for j in 0..observatory_count {
         let avg_time = Arc::clone(&avg_times[j]);
-        let handle = thread::spawn(move || {
-            
-            let mut obs = Observatory::new(avg_time);
-            obs.add(j as f64);
-            println!("observatory {} : {}", j, obs.get_avg_time());
-        });
-        handles.push(handle);
+        let mut obs = Observatory::new(avg_time, "");
+        obs.run();
+        observatories.push(obs);
     }
 
     loop {
@@ -39,8 +35,8 @@ fn main() {
             .expect("Wanted a valid string!");
 
         if user_input.to_lowercase() == "q" {
-            for handle in handles {
-                handle.join().unwrap();
+            for obs in observatories {
+                obs.gracefulQuit();
             }
             println!("Goodbye!");
             return;
