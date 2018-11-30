@@ -10,6 +10,7 @@ pub struct Receiver {
 }
 
 pub struct Observatory {
+	id: usize,
     total_time: f64,
     events: f64,
 	avg_time: Arc<Mutex<f64>>,
@@ -22,15 +23,16 @@ pub struct Observatory {
 
 
 impl Observatory {
-	pub fn new(init_time: Arc<Mutex<f64>>, line: &str) -> Observatory {
-		Observatory { total_time:0.0, 
+	pub fn new(id:usize, init_time: Arc<Mutex<f64>>, line: &str) -> Observatory {
+		Observatory { id:id,
+			total_time:0.0, 
 			events:0.0, 
 			avg_time: init_time, 
 			quadrant_qty:0, 
 			seconds:0,
 			quadrants_per_server:Vec::new(), 
-			sender: Sender::new(),
-			receiver: Receiver::new()
+			sender: Sender::new(id),
+			receiver: Receiver::new(id)
 		}
 	}
 
@@ -64,10 +66,10 @@ impl Observatory {
 }
 
 impl Sender {
-	fn new() -> Sender {
+	fn new(id: usize) -> Sender {
 		Sender {
 			handle: thread::spawn(move || {
-	            println!("observatory started sender!");
+	            println!("observatory {} started sender!", id);
 	            return 0;
 	        })
 		}
@@ -79,10 +81,10 @@ impl Sender {
 }
 
 impl Receiver {
-	fn new() -> Receiver {
+	fn new(id: usize) -> Receiver {
 		Receiver {
 			handle: thread::spawn(move || {
-	            println!("observatory started receiver!");
+	            println!("observatory {} started receiver!", id);
 	            return 0;
 	        })
 		}

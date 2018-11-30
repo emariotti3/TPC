@@ -17,7 +17,7 @@ fn main() {
 
     for j in 0..observatory_count {
         let avg_time = Arc::clone(&avg_times[j]);
-        let mut obs = Observatory::new(avg_time, "");
+        let mut obs = Observatory::new(j, avg_time, "");
         observatories.push(obs);
     }
 
