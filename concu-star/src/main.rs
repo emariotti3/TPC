@@ -18,7 +18,6 @@ fn main() {
     for j in 0..observatory_count {
         let avg_time = Arc::clone(&avg_times[j]);
         let mut obs = Observatory::new(avg_time, "");
-        obs.run();
         observatories.push(obs);
     }
 
@@ -35,8 +34,8 @@ fn main() {
             .expect("Wanted a valid string!");
 
         if user_input.to_lowercase() == "q" {
-            for obs in observatories {
-                obs.gracefulQuit();
+            for mut obs in observatories {
+                obs.graceful_quit();
             }
             println!("Goodbye!");
             return;
