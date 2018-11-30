@@ -1,7 +1,6 @@
 use std::sync::{Mutex, Arc};
 
 pub struct Observatory {
-	id:i32,
     total_time: f64,
     events: f64,
 	avg_time: Arc<Mutex<f64>>,
@@ -11,7 +10,7 @@ pub struct Observatory {
 }
 
 impl Observatory {
-	pub fn new(id:i32, init_time: Arc<Mutex<f64>>, line: &str) -> Observatory{
+	pub fn new(init_time: Arc<Mutex<f64>>, line: &str) -> Observatory{
 		Observatory{total_time:0.0, events:0.0, avg_time: init_time, quadrant_qty:0,seconds:0,quadrants_per_server:Vec::new()};
 		parse_line(line);
 	}
@@ -31,9 +30,12 @@ impl Observatory {
 	}
 
 	fn parse_line(String line){
-		//parseo linea y meto los datos en el struct
 		let params: Vec<&str> = line.split(" ").collect();
+		self.seconds = params[0];
 		self.quadrant_qty = params[1]; //Pasar a constantes
+		for i in 2..params.len(){
+			self.quadrants_per_server.push(params[i]);
+		};
 	}
 
 
