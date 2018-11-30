@@ -7,9 +7,10 @@ mod network;
 use network::observatory::{Observatory};
 
 fn main() {
-    let observatory_count = 10;
+    let observatory_count = 3;
     let mut observatories = Vec::new();
     let mut avg_times = Vec::new();
+    let mut running = Arc::new(Mutex::new(true));
 
     for _ in 0..observatory_count {
         avg_times.push(Arc::new(Mutex::new(0.0)));
@@ -17,7 +18,7 @@ fn main() {
 
     for j in 0..observatory_count {
         let avg_time = Arc::clone(&avg_times[j]);
-        let mut obs = Observatory::new(j, avg_time, "");
+        let mut obs = Observatory::new(j, avg_time, &running, "");
         observatories.push(obs);
     }
 
@@ -34,10 +35,13 @@ fn main() {
             .expect("Wanted a valid string!");
 
         if user_input.to_lowercase() == "q" {
+            {
+                let mut running_val = running.lock().unwrap();
+                *running_val = false;
+            }
             for mut obs in observatories {
                 obs.graceful_quit();
             }
-            println!("Goodbye!");
             return;
         }
 

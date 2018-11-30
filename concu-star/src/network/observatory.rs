@@ -1,4 +1,4 @@
-use std::thread;
+use std::{thread, time};
 use std::sync::{Mutex, Arc};
 
 pub struct Sender {
@@ -23,7 +23,9 @@ pub struct Observatory {
 
 
 impl Observatory {
-	pub fn new(id:usize, init_time: Arc<Mutex<f64>>, line: &str) -> Observatory {
+	pub fn new(id:usize, init_time: Arc<Mutex<f64>>, running: &Arc<Mutex<bool>>, line: &str) -> Observatory {
+		let running_m_sender = Arc::clone(running);
+        let running_m_receiver = Arc::clone(running);
 		Observatory { id:id,
 			total_time:0.0, 
 			events:0.0, 
@@ -31,8 +33,8 @@ impl Observatory {
 			quadrant_qty:0, 
 			seconds:0,
 			quadrants_per_server:Vec::new(), 
-			sender: Sender::new(id),
-			receiver: Receiver::new(id)
+			sender: Sender::new(id, running_m_sender),
+			receiver: Receiver::new(id,running_m_receiver)
 		}
 	}
 
@@ -66,11 +68,22 @@ impl Observatory {
 }
 
 impl Sender {
-	fn new(id: usize) -> Sender {
+	fn new(id: usize, running_m: Arc<Mutex<bool>>) -> Sender {
 		Sender {
 			handle: thread::spawn(move || {
-	            println!("observatory {} started sender!", id);
-	            return 0;
+				let mut continue_running = true;
+				while(continue_running) {
+		            println!("observatory {} started sender!", id);
+		            let ten = time::Duration::from_millis(10000);
+					let now = time::Instant::now();
+
+					thread::sleep(ten);		            
+		            {
+						continue_running = *running_m.lock().unwrap()
+					}
+		        }
+		        println!("Goodbye from observatory sender {}", id);
+		        return 0;
 	        })
 		}
 	}
@@ -81,11 +94,22 @@ impl Sender {
 }
 
 impl Receiver {
-	fn new(id: usize) -> Receiver {
+	fn new(id: usize, running_m: Arc<Mutex<bool>>) -> Receiver {
 		Receiver {
 			handle: thread::spawn(move || {
-	            println!("observatory {} started receiver!", id);
-	            return 0;
+				let mut continue_running = true;
+				while(continue_running) {
+		            println!("observatory {} started receiver!", id);
+		            let ten = time::Duration::from_millis(10000);
+					let now = time::Instant::now();
+
+					thread::sleep(ten);
+		            {
+						continue_running = *running_m.lock().unwrap()
+					}
+		        }
+		        println!("Goodbye from observatory receiver {}", id);
+		        return 0;
 	        })
 		}
 	}
