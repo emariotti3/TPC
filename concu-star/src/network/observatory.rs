@@ -1,5 +1,9 @@
 use std::sync::{Mutex, Arc};
 
+const SECONDS: usize = 0;
+const QUADRANT_QTY: usize = 1;
+const QUADRANTS_PER_SERVER: usize = 2;
+
 pub struct Observatory {
     total_time: f64,
     events: f64,
@@ -10,9 +14,8 @@ pub struct Observatory {
 }
 
 impl Observatory {
-	pub fn new(init_time: Arc<Mutex<f64>>, line: &str) -> Observatory{
-		Observatory{total_time:0.0, events:0.0, avg_time: init_time, quadrant_qty:0,seconds:0,quadrants_per_server:Vec::new()};
-		parse_line(line);
+	pub fn new(init_time: Arc<Mutex<f64>>) -> Observatory{
+		Observatory{total_time:0.0, events:0.0, avg_time: init_time, quadrant_qty:0,seconds:0,quadrants_per_server:Vec::new()}
 	}
 
 	pub fn get_avg_time(&self) -> f64 {
@@ -29,12 +32,13 @@ impl Observatory {
         *time = self.total_time as f64 / self.events as f64;
 	}
 
-	fn parse_line(String line){
+	pub fn parse_line(&mut self, line: &str){
 		let params: Vec<&str> = line.split(" ").collect();
-		self.seconds = params[0];
-		self.quadrant_qty = params[1]; //Pasar a constantes
-		for i in 2..params.len(){
-			self.quadrants_per_server.push(params[i]);
+	
+		self.seconds = params[SECONDS].parse().unwrap();
+		self.quadrant_qty = params[QUADRANT_QTY].parse().unwrap();
+		for i in QUADRANTS_PER_SERVER..params.len(){
+			self.quadrants_per_server.push(params[i].parse().unwrap());
 		};
 	}
 
