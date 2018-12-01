@@ -25,7 +25,7 @@ fn main() {
     let mut senders_servers: Vec<mpsc::Sender<Message>> = Vec::new();
     
     for _s in 0..cant_servidores {
-        let mut server = Server::new(_s,2);
+        let mut server = Server::new(_s,_s*3);
         senders_servers.push(server.get_sender());
         servers.push(server);
     }        

@@ -29,14 +29,14 @@ impl Server {
 	}
 
 	pub fn run(&self,running: &Arc<Mutex<bool>>) {
-        while *running.lock().unwrap() {
+        while {*running.lock().unwrap()}{
         	let valor_recibido = self.rx.recv().unwrap();
-            println!("Server {} reciv {:?}", self.id, valor_recibido);
+            println!("Server {} reciv foro id {}", self.id, valor_recibido.id_photo);
 
-            thread::sleep(Duration::from_millis(self.process_time as u64));
+            thread::sleep(Duration::from_millis(1000*self.process_time as u64));
 
             self.observatories_senders[valor_recibido.id_observatory].send(valor_recibido).unwrap();
-			println!("Server {} send", self.id);
+			// println!("Server {} send", self.id);
      	}
 		println!("Goodbye from server {}", self.id);
 	}

@@ -1,5 +1,6 @@
 use std::{thread, time};
 use std::sync::{Mutex, Arc, mpsc};
+use std::collections::HashMap;
 
 const SECONDS: usize = 0;
 const QUADRANT_QTY: usize = 1;
@@ -20,7 +21,7 @@ pub struct Observatory {
     total_time: f64,
     events: f64,
 	avg_time: Arc<Mutex<f64>>,
-	quadrant_qty: i32,
+	quadrant_qty: usize,
 	seconds: i32,
 	quadrants_per_server: Vec<i32>,
 	// sender: Sender,
@@ -69,27 +70,46 @@ impl Observatory {
 
 		let server_sender = thread::spawn(move || {
 			let mut id_message = 0;
-			while *continue_running_server_processor.lock().unwrap() {
+			while {*continue_running_server_processor.lock().unwrap()} {
 				let now = time::Instant::now();
 				let _message = Message{id_observatory: _id, id_photo: id_message, start_time: now };
 				for server in &_quadrants_per_server {
 					let message = _message.clone();
                 	println!("Observatory {} send to server {}", _id, *server);
                 	_servers_senders[*server as usize].send(message).unwrap();
-					thread::sleep(time::Duration::from_millis(5000));	
+					thread::sleep(time::Duration::from_millis(1000));	
         		}
 				id_message += 1;
 			}
 			println!("corto el hilo sender {}", _id);
     	});
 		
-		while *running.lock().unwrap() {
+
+		let mut sending_messages: HashMap<usize, usize>  = HashMap::new();
+
+		while {*running.lock().unwrap()} {
             let valor_recibido = self.rx.recv().unwrap();
-			println!("Observatory {} reciv from server {:?}", _id, valor_recibido);
+			// println!("Observatory {} reciv foto id {}", _id, valor_recibido.id_photo);
 			//HACER EL CHEQUEO CON EL VALOR RECIBIDO
+			self.process_new_messege(&valor_recibido, &mut sending_messages);
+
         }
 		server_sender.join().unwrap();   
 		println!("Goodbye from observatory run {}", _id);
+	}
+
+	fn process_new_messege(&mut self,message: &Message ,messages: &mut HashMap<usize, usize> ){
+		let _id_photo = message.id_photo;
+		let mut quadrants_count = *messages.entry(_id_photo).or_insert(0);
+		quadrants_count += 1;
+		if quadrants_count == self.quadrant_qty {
+			println!("Observatory {} termino de procesar la foto {} en tiempo {}", self.id , _id_photo, message.start_time.elapsed().as_secs());
+			return;
+		}	
+		println!("Observatory {} recibio un nuevo cuadrande{} de foto {}", self.id, quadrants_count, _id_photo);
+
+		messages.insert(_id_photo, quadrants_count);
+		// println!(" dic  {:?}",messages);
 	}
 
 	// pub fn graceful_quit(self) {
