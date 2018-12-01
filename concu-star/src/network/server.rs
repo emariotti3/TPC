@@ -28,15 +28,17 @@ impl Server {
 		return mpsc::Sender::clone(&self.tx);
 	}
 
-	pub fn run(&self,running: &Arc<Mutex<bool>>) {
-        while *running.lock().unwrap() {
-        	let valor_recibido = self.rx.recv().unwrap();
-            println!("Server {} reciv {:?}", self.id, valor_recibido);
+	pub fn run(&self, running: &Arc<Mutex<bool>>) {
+        while {*running.lock().unwrap()}{
+        	//let valor_recibido = self.rx.recv().unwrap();
+            //println!("Server {} reciv foto id {}", self.id, valor_recibido.id_photo);
 
-            thread::sleep(Duration::from_millis(self.process_time as u64));
+            println!("Server {} send", self.id);
+            thread::sleep(Duration::from_millis(1000*7));
+            //thread::sleep(Duration::from_millis(1000*self.process_time as u64));
 
-            self.observatories_senders[valor_recibido.id_observatory].send(valor_recibido).unwrap();
-			println!("Server {} send", self.id);
+            //self.observatories_senders[valor_recibido.id_observatory].send(valor_recibido).unwrap();
+			
      	}
 		println!("Goodbye from server {}", self.id);
 	}

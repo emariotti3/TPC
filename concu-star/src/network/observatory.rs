@@ -1,6 +1,7 @@
 use std::{thread, time};
 use std::thread::JoinHandle;
 use std::sync::{Mutex, Arc, mpsc};
+use std::collections::HashMap;
 
 const SECONDS: usize = 0;
 const QUADRANT_QTY: usize = 1;
@@ -13,7 +14,7 @@ pub struct Observatory {
     total_time: f64,
     events: f64,
 	avg_time: Arc<Mutex<f64>>,
-	quadrant_qty: i32,
+	quadrant_qty: usize,
 	seconds: i32,
 	quadrants_per_server: Vec<i32>,
 	rx: mpsc::Receiver<Message>,
@@ -48,36 +49,68 @@ impl Observatory {
 		return mpsc::Sender::clone(&self.tx);
 	}
 
-	pub fn run(&mut self, running: &Arc<Mutex<bool>>) -> JoinHandle<i32> {
-		let continue_running_server_processor = Arc::clone(running);
+	pub fn run(&mut self, running: &Arc<Mutex<bool>>) -> (JoinHandle<i32>, JoinHandle<i32>) {
+		let continue_running_sender = Arc::clone(running);
+		let continue_running_receiver = Arc::clone(running);
 
 		let _id = self.id; // no le pudo pasar atributos  con self al hilo
 		let _quadrants_per_server = self.quadrants_per_server.clone();
 		let _servers_senders = self.servers_senders.clone();
 
-		let server_sender = thread::spawn(move || {
+		println!("Observatory {} is up!", self.id);
+
+		//Spawn sender thread
+		let sender = thread::spawn(move || {
 			let mut id_message = 0;
-			while *continue_running_server_processor.lock().unwrap() {
+
+			while {*continue_running_sender.lock().unwrap()} {
 				let now = time::Instant::now();
 				let _message = Message{id_observatory: _id, id_photo: id_message, start_time: now };
 				for server in &_quadrants_per_server {
-					let message = _message.clone();
+					//let message = _message.clone();
                 	println!("Observatory {} send to server {}", _id, *server);
-                	_servers_senders[*server as usize].send(message).unwrap();
-					thread::sleep(time::Duration::from_millis(5000));	
+                	//_servers_senders[*server as usize].send(message).unwrap();
+					thread::sleep(time::Duration::from_millis(1000*5));	
         		}
 				id_message += 1;
 			}
-			println!("corto el hilo sender {}", _id);
+			println!("Observatory {}: sender thread is down!", _id);
 			return 0;
     	});
 
-		/*while *running.lock().unwrap() {
-            let valor_recibido = self.rx.recv().unwrap();
-			println!("Observatory {} reciv from server {:?}", _id, valor_recibido);
-			//HACER EL CHEQUEO CON EL VALOR RECIBIDO
-        }*/
-		return server_sender;
+		//Spawn receiver thread		
+		let receiver = thread::spawn(move || {
+			let mut sending_messages: HashMap<usize, usize>  = HashMap::new();
+
+			while {*continue_running_receiver.lock().unwrap()} {
+	            //let valor_recibido = self.rx.recv().unwrap();
+				//println!("Observatory {} reciv foto id {}", _id, valor_recibido.id_photo);
+				//HACER EL CHEQUEO CON EL VALOR RECIBIDO
+				//self.process_new_messege(&valor_recibido, &mut sending_messages);
+				println!("Observatory receiver {} is running!", _id);
+				thread::sleep(time::Duration::from_millis(1000*5));
+
+	        }
+			println!("Observatory {}: receiver thread is down!", _id);
+	        return 0;
+    	});
+
+		println!("Goodbye from observatory {}", self.id);
+		return (sender, receiver);
+	}
+
+	fn process_new_messege(&mut self,message: &Message ,messages: &mut HashMap<usize, usize> ){
+		let _id_photo = message.id_photo;
+		let mut quadrants_count = *messages.entry(_id_photo).or_insert(0);
+		quadrants_count += 1;
+		if quadrants_count == self.quadrant_qty {
+			println!("Observatory {} termino de procesar la foto {} en tiempo {}", self.id , _id_photo, message.start_time.elapsed().as_secs());
+			return;
+		}	
+		println!("Observatory {} recibio un nuevo cuadrande{} de foto {}", self.id, quadrants_count, _id_photo);
+
+		messages.insert(_id_photo, quadrants_count);
+		// println!(" dic  {:?}",messages);
 	}
 
 	pub fn parse_line(&mut self, line: &str){
