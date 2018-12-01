@@ -1,5 +1,6 @@
 use std::{thread, time};
 use std::thread::JoinHandle;
+use std::time::{Duration, Instant};
 use std::sync::{Mutex, Arc, mpsc};
 use std::collections::HashMap;
 
@@ -95,7 +96,6 @@ impl Observatory {
 	        return 0;
     	});
 
-		println!("Goodbye from observatory {}", self.id);
 		return (sender, receiver);
 	}
 
@@ -104,6 +104,11 @@ impl Observatory {
 		let mut quadrants_count = *messages.entry(_id_photo).or_insert(0);
 		quadrants_count += 1;
 		if quadrants_count == self.quadrant_qty {
+			//Add image process time to total:
+			self.total_time += message.start_time.elapsed().as_secs() as f64;
+			self.events += 1.0;
+			//Update global avg variable:
+			self.update_avg_time();
 			println!("Observatory {} termino de procesar la foto {} en tiempo {}", self.id , _id_photo, message.start_time.elapsed().as_secs());
 			return;
 		}	
@@ -111,6 +116,11 @@ impl Observatory {
 
 		messages.insert(_id_photo, quadrants_count);
 		// println!(" dic  {:?}",messages);
+	}
+
+	fn update_avg_time(&mut self) {
+        let mut time = self.avg_time.lock().unwrap();
+        *time = self.total_time / self.events;
 	}
 
 	pub fn parse_line(&mut self, line: &str){

@@ -26,7 +26,6 @@ fn main() {
         let mut server = Server::new(_s,_s*3);
         senders_servers.push(server.get_sender());
         servers.push(server);
-        println!("Server count {}", _s);
     }        
 
     for line in BufReader::new(file).lines() {
