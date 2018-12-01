@@ -15,7 +15,7 @@ fn main() {
     // let mut observatories: Vec<Observatory> = Vec::new();
     let mut avg_times = Vec::new();
     let running = Arc::new(Mutex::new(true));
-    let file = File::open("src/hola.txt").expect("file not found");;
+    let file = File::open("hola.txt").expect("file not found");;
     let mut j = 0;
 
     let cant_servidores = 3;
@@ -34,19 +34,18 @@ fn main() {
         avg_times.push(Arc::new(Mutex::new(0.0)));
         let avg_time = Arc::clone(&avg_times[j]);
 
+        //Create observatory
         let mut obs = Observatory::new(j, avg_time, &running, "");
+        //Initialize observatory
         obs.parse_line(&line.unwrap());
-        obs.add(j as f64);
         senders_observatorios.push(obs.get_sender());
         obs.set_servers_senders(senders_servers.clone());
-        // println!("observatory {} : {}", j, obs.get_avg_time());
-
-        // observatories.push(obs);
+        //Run observatory
         let _running = Arc::clone(&running);
-        children.push(thread::spawn(move || { 
-            obs.run(&_running);
-        }));
-
+        let handle = obs.run(&_running);
+        //Save observatory threads for join on 'q'
+        children.push(handle);
+        
         j += 1;
     }
 
@@ -55,6 +54,7 @@ fn main() {
         let _running = Arc::clone(&running);
         children.push(thread::spawn(move || { 
             server.run(&_running);
+            return 0;
         }));
     } 
 
@@ -68,26 +68,10 @@ fn main() {
                 let mut running_val = running.lock().unwrap();
                 *running_val = false;
             }
-            // for mut obs in observatories {
-            //     obs.graceful_quit();
-            // }
+            for mut handle in children {
+                handle.join().unwrap();
+            }
             return;
         }
-
-        let input = user_input.parse::<usize>();
-        match input {
-            Ok(number) => { 
-                if number < observatory_count {
-                    println!("Average time per image for observatory {} is: {}sec.", number ,*avg_times[number].lock().unwrap());
-                }else{
-                    println!("Please enter a valid observatory number! [0 : {}] or 'q' to exit!", observatory_count-1);
-                }
-            },
-            Err(e) => println!("Wanted a positive number! ({})", e), 
-        }  
-
     }
-    // for child in children {
-    //     child.join().unwrap();
-    // }
 }

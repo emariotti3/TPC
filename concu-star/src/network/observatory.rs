@@ -1,4 +1,5 @@
 use std::{thread, time};
+use std::thread::JoinHandle;
 use std::sync::{Mutex, Arc, mpsc};
 
 const SECONDS: usize = 0;
@@ -6,14 +7,6 @@ const QUADRANT_QTY: usize = 1;
 const QUADRANTS_PER_SERVER: usize = 2;
 
 use network::message::{Message};
-
-// pub struct Sender {
-// 	handle: std::thread::JoinHandle<i32>
-// }
-
-// pub struct Receiver {
-// 	handle: std::thread::JoinHandle<i32>
-// }
 
 pub struct Observatory {
 	id: usize,
@@ -23,12 +16,9 @@ pub struct Observatory {
 	quadrant_qty: i32,
 	seconds: i32,
 	quadrants_per_server: Vec<i32>,
-	// sender: Sender,
-	// receiver: Receiver,
-
 	rx: mpsc::Receiver<Message>,
 	tx: mpsc::Sender<Message>,
-	servers_senders: Vec<mpsc::Sender<Message>>,
+	servers_senders: Vec<mpsc::Sender<Message>>
 }
 
 
@@ -46,9 +36,7 @@ impl Observatory {
 			avg_time: init_time, 
 			quadrant_qty:0, 
 			seconds:0,
-			quadrants_per_server:Vec::new(), 
-			// sender: Sender::new(id, running_m_sender),
-			// receiver: Receiver::new(id,running_m_receiver)
+			quadrants_per_server:Vec::new()
 		}
 	}
 
@@ -60,7 +48,7 @@ impl Observatory {
 		return mpsc::Sender::clone(&self.tx);
 	}
 
-	pub fn run(&mut self, running: &Arc<Mutex<bool>>) {
+	pub fn run(&mut self, running: &Arc<Mutex<bool>>) -> JoinHandle<i32> {
 		let continue_running_server_processor = Arc::clone(running);
 
 		let _id = self.id; // no le pudo pasar atributos  con self al hilo
@@ -81,36 +69,15 @@ impl Observatory {
 				id_message += 1;
 			}
 			println!("corto el hilo sender {}", _id);
+			return 0;
     	});
-		
-		while *running.lock().unwrap() {
+
+		/*while *running.lock().unwrap() {
             let valor_recibido = self.rx.recv().unwrap();
 			println!("Observatory {} reciv from server {:?}", _id, valor_recibido);
 			//HACER EL CHEQUEO CON EL VALOR RECIBIDO
-        }
-		server_sender.join().unwrap();   
-		println!("Goodbye from observatory run {}", _id);
-	}
-
-	// pub fn graceful_quit(self) {
-	// 	//TODO:finish sending
-	// 	self.sender.quit();
-	// 	//TODO:finish receiving
-	// 	self.receiver.quit();
-	// }
-
-	pub fn get_avg_time(&mut self) -> f64 {
-		let time = self.avg_time.lock().unwrap();
-		return *time;
-	}
-
-    pub fn add(&mut self, value: f64) {
-        self.total_time += value;
-    }
-
-	fn update_average(&mut self) {
-        let mut time = self.avg_time.lock().unwrap();
-        *time = self.total_time as f64 / self.events as f64;
+        }*/
+		return server_sender;
 	}
 
 	pub fn parse_line(&mut self, line: &str){
@@ -124,54 +91,4 @@ impl Observatory {
 	}
 }
 
-// impl Sender {
-// 	fn new(id: usize, running_m: Arc<Mutex<bool>>) -> Sender {
-// 		Sender {
-// 			handle: thread::spawn(move || {
-// 				let mut continue_running = true;
-// 				while continue_running {
-// 		            println!("observatory {} started sender!", id);
-// 		            let ten = time::Duration::from_millis(10000);
-// 					let now = time::Instant::now();
 
-// 					thread::sleep(ten);		            
-// 		            {
-// 						continue_running = *running_m.lock().unwrap()
-// 					}
-// 		        }
-// 		        println!("Goodbye from observatory sender {}", id);
-// 		        return 0;
-// 	        })
-// 		}
-// 	}
-
-// 	pub fn quit(self) {
-// 		self.handle.join().unwrap();
-// 	}
-// }
-
-// impl Receiver {
-// 	fn new(id: usize, running_m: Arc<Mutex<bool>>) -> Receiver {
-// 		Receiver {
-// 			handle: thread::spawn(move || {
-// 				let mut continue_running = true;
-// 				while continue_running {
-// 		            println!("observatory {} started receiver!", id);
-// 		            let ten = time::Duration::from_millis(10000);
-// 					let now = time::Instant::now();
-
-// 					thread::sleep(ten);
-// 		            {
-// 						continue_running = *running_m.lock().unwrap()
-// 					}
-// 		        }
-// 		        println!("Goodbye from observatory receiver {}", id);
-// 		        return 0;
-// 	        })
-// 		}
-// 	}
-
-// 	pub fn quit(self) {
-// 		self.handle.join().unwrap();
-// 	}
-// }
