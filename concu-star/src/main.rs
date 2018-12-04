@@ -13,22 +13,26 @@ use network::message::{Message};
 fn main() {
     let mut avg_times = Vec::new();
     let running = Arc::new(Mutex::new(true));
-    let file = File::open("config.txt").expect("Configuration file not found!");
-    let mut observatory_count = 0;
+    let file = File::open("../config.txt").expect("Configuration file not found!");
+    let mut reader = BufReader::new(file);
+    let mut first_line = String::new();
+    let mut observatory_count = 0;    
 
-    let cant_servidores = 3;
     let mut children = vec![];
     let mut servers: Vec<Server> = Vec::new();
     let mut senders_observatorios: Vec<mpsc::Sender<Message>> = Vec::new();
     let mut senders_servers: Vec<mpsc::Sender<Message>> = Vec::new();
+
+    reader.read_line(&mut first_line).expect("Unable to read line");
+    let servers_time: Vec<&str> = first_line.split_whitespace().collect();
     
-    for _s in 0..cant_servidores {
-        let mut server = Server::new(_s,_s*3);
+    for _s in 0..servers_time.len() {
+        let mut server = Server::new(_s, servers_time[_s].parse().unwrap());
         senders_servers.push(server.get_sender());
         servers.push(server);
     }        
 
-    for line in BufReader::new(file).lines() {
+    for line in reader.lines() {
         avg_times.push(Arc::new(Mutex::new(0.0)));
         let avg_time = Arc::clone(&avg_times[observatory_count]);
 

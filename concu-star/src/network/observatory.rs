@@ -125,7 +125,7 @@ impl Observatory {
 
 	pub fn parse_line(&mut self, line: &str){
 		let params: Vec<&str> = line.split(" ").collect();
-	
+
 		self.seconds = params[SECONDS].parse().unwrap();
 		self.quadrant_qty = params[QUADRANT_QTY].parse().unwrap();
 		for i in QUADRANTS_PER_SERVER..params.len(){
