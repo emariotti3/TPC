@@ -63,6 +63,7 @@ impl Observatory {
 				let mut server_number = 0;
 				let now = time::Instant::now();
 				let _message = Message{id_observatory: _id, id_photo: id_message, start_time: now };
+
 				for quadrants in &_quadrants_per_server {
 					for _i in 0..*quadrants {
 						let message = _message.clone();
@@ -70,7 +71,9 @@ impl Observatory {
                 	}
 					thread::sleep(time::Duration::from_millis(1000 * (_seconds as u64)));
 					server_number += 1;
-        		}
+
+        }
+				thread::sleep(time::Duration::from_millis(1000 * (_seconds as u64)));	
 				id_message += 1;
 			}
 			for server_tx in _servers_senders {
