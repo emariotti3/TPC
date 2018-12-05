@@ -60,12 +60,16 @@ impl Observatory {
 		let sender = thread::spawn(move || {
 			let mut id_message = 0;
 			while {*running_s.lock().unwrap()} {
+				let mut server_number = 0;
 				let now = time::Instant::now();
 				let _message = Message{id_observatory: _id, id_photo: id_message, start_time: now };
-				for server in &_quadrants_per_server {
-					let message = _message.clone();
-                	_servers_senders[*server as usize].send(message).unwrap();
-					thread::sleep(time::Duration::from_millis(1000 * (_seconds as u64)));	
+				for quadrants in &_quadrants_per_server {
+					for _i in 0..*quadrants {
+						let message = _message.clone();
+                		_servers_senders[server_number as usize].send(message).unwrap();
+                	}
+					thread::sleep(time::Duration::from_millis(1000 * (_seconds as u64)));
+					server_number += 1;
         		}
 				id_message += 1;
 			}
