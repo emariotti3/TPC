@@ -67,7 +67,6 @@ fn main() {
 
     println!("Write the number of observatory to get the average time per image or 'q' to exit");
     
-    
     loop {
         let mut line = String::new();
         io::stdin().read_line(&mut line).expect("Failed to read line!");

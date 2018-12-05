@@ -65,8 +65,8 @@ impl Observatory {
 				for server in &_quadrants_per_server {
 					let message = _message.clone();
                 	_servers_senders[*server as usize].send(message).unwrap();
-					thread::sleep(time::Duration::from_millis(1000 * (_seconds as u64)));	
         		}
+				thread::sleep(time::Duration::from_millis(1000 * (_seconds as u64)));	
 				id_message += 1;
 			}
 			for server_tx in _servers_senders {

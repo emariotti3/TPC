@@ -42,7 +42,6 @@ impl Server {
 			if valor_recibido.id_photo == INVALID_ID_PHOTO { 
 				observatories_count -= 1;
 				if observatories_count == 0 { break; }
-				continue;
 			}
      	}
 		println!("Goodbye from server {}", self.id);
