@@ -1,6 +1,5 @@
 use std::{thread, time};
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
 use std::sync::{Mutex, Arc, mpsc};
 use std::collections::HashMap;
 
@@ -26,9 +25,7 @@ pub struct Observatory {
 }
 
 impl Observatory {
-	pub fn new(id:usize, init_time: Arc<Mutex<f64>>, running: &Arc<Mutex<bool>>, line: &str) -> Observatory {
-		let running_m_sender = Arc::clone(running);
-        let running_m_receiver = Arc::clone(running);
+	pub fn new(id:usize, init_time: Arc<Mutex<f64>>) -> Observatory {
 		let (tx, rx): (mpsc::Sender<Message>, mpsc::Receiver<Message>) = mpsc::channel();
 		Observatory { id:id as isize,
 			rx:rx, tx:tx, servers_senders:Vec::new(),

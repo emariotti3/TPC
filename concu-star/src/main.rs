@@ -4,7 +4,7 @@ use std::usize;
 use std::sync::{Mutex, Arc, mpsc};
 use std::io::{BufReader,BufRead};
 use std::fs::File;
-use std::time;
+
 
 mod network;
 use network::observatory::{Observatory};
@@ -12,6 +12,12 @@ use network::server::{Server};
 use network::message::{Message};
 
 fn main() {
+    println!("------------------------------------------------------------------------------");
+    println!("--------------------------------- CONCU-STAR ---------------------------------");
+    println!("------------------------------------------------------------------------------");
+    println!("Simulation begins...");
+    println!("Write the number of observatory to get the average time per image or 'q' to exit");
+
     let mut avg_times = Vec::new();
     let running = Arc::new(Mutex::new(true));
     let file = File::open("config.txt").expect("Configuration file not found!");
@@ -37,7 +43,7 @@ fn main() {
         avg_times.push(Arc::new(Mutex::new(0.0)));
         let avg_time = Arc::clone(&avg_times[observatory_count]);
 
-        let mut obs = Observatory::new(observatory_count, avg_time, &running, "");
+        let mut obs = Observatory::new(observatory_count, avg_time);
         obs.parse_line(&line.unwrap());
         senders_observatorios.push(obs.get_sender());
         obs.set_servers_senders(senders_servers.clone());
@@ -53,20 +59,13 @@ fn main() {
 
     for mut server in servers {
         server.set_observatories_senders(senders_observatorios.clone());
-        let _running = Arc::clone(&running);
+
         children.push(thread::spawn(move || { 
             server.run();
             return 0;
         }));
     } 
-    println!("------------------------------------------------------------------------------");
-    println!("--------------------------------- CONCU-STAR ---------------------------------");
-    println!("------------------------------------------------------------------------------");
 
-    println!("Simulation begins...");
-
-    println!("Write the number of observatory to get the average time per image or 'q' to exit");
-    
     loop {
         let mut line = String::new();
         io::stdin().read_line(&mut line).expect("Failed to read line!");

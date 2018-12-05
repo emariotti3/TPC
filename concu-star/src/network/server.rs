@@ -1,5 +1,5 @@
-use std::{thread, time};
-use std::sync::{Mutex, Arc, mpsc};
+use std::thread;
+use std::sync:: mpsc;
 use std::time::Duration;
 
 use network::message::{Message};
