@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct Message {
-	pub id_observatory: usize,
-    pub id_photo: usize,
+	pub id_observatory: isize,
+    pub id_photo: isize,
 	pub start_time: std::time::Instant
 }

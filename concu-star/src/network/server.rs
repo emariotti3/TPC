@@ -1,8 +1,10 @@
-use std::thread;
+use std::{thread, time};
 use std::sync::{Mutex, Arc, mpsc};
 use std::time::Duration;
 
 use network::message::{Message};
+
+const INVALID_ID_PHOTO: isize = -1;
 
 #[derive(Debug)]
 pub struct Server {
@@ -28,17 +30,20 @@ impl Server {
 		return mpsc::Sender::clone(&self.tx);
 	}
 
-	pub fn run(&self, running: &Arc<Mutex<bool>>) {
-        while {*running.lock().unwrap()}{
-        	//let valor_recibido = self.rx.recv().unwrap();
-            //println!("Server {} reciv foto id {}", self.id, valor_recibido.id_photo);
+	pub fn run(&mut self) {
+		let mut observatories_count = self.observatories_senders.len();
 
-            println!("Server {} send", self.id);
-            thread::sleep(Duration::from_millis(1000*7));
-            //thread::sleep(Duration::from_millis(1000*self.process_time as u64));
-
-            //self.observatories_senders[valor_recibido.id_observatory].send(valor_recibido).unwrap();
+		loop {
+        	let valor_recibido = self.rx.recv().unwrap();
+            
+            thread::sleep(Duration::from_millis(1000 * (self.process_time as u64)));
+            self.observatories_senders[valor_recibido.id_observatory as usize].send(valor_recibido.clone()).unwrap();
 			
+			if valor_recibido.id_photo == INVALID_ID_PHOTO { 
+				observatories_count -= 1;
+				if observatories_count == 0 { break; }
+				continue;
+			}
      	}
 		println!("Goodbye from server {}", self.id);
 	}

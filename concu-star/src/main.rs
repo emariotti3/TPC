@@ -4,6 +4,7 @@ use std::usize;
 use std::sync::{Mutex, Arc, mpsc};
 use std::io::{BufReader,BufRead};
 use std::fs::File;
+use std::time;
 
 mod network;
 use network::observatory::{Observatory};
@@ -13,7 +14,7 @@ use network::message::{Message};
 fn main() {
     let mut avg_times = Vec::new();
     let running = Arc::new(Mutex::new(true));
-    let file = File::open("../config.txt").expect("Configuration file not found!");
+    let file = File::open("config.txt").expect("Configuration file not found!");
     let mut reader = BufReader::new(file);
     let mut first_line = String::new();
     let mut observatory_count = 0;    
@@ -36,32 +37,37 @@ fn main() {
         avg_times.push(Arc::new(Mutex::new(0.0)));
         let avg_time = Arc::clone(&avg_times[observatory_count]);
 
-        //Create observatory
         let mut obs = Observatory::new(observatory_count, avg_time, &running, "");
-        //Initialize observatory
         obs.parse_line(&line.unwrap());
         senders_observatorios.push(obs.get_sender());
         obs.set_servers_senders(senders_servers.clone());
-        //Run observatory
+
         let _running = Arc::clone(&running);
-        let handles = obs.run(&_running);
-        //Save observatory threads for join on 'q'
-        children.push(handles.0);
-        children.push(handles.1);
-        
+        children.push(thread::spawn(move || { 
+            obs.run(&_running);
+            return 0;
+        }));
+
         observatory_count += 1;
-        println!("Observatory count {}", observatory_count);
     }
 
     for mut server in servers {
         server.set_observatories_senders(senders_observatorios.clone());
         let _running = Arc::clone(&running);
         children.push(thread::spawn(move || { 
-            server.run(&_running);
+            server.run();
             return 0;
         }));
     } 
+    println!("------------------------------------------------------------------------------");
+    println!("--------------------------------- CONCU-STAR ---------------------------------");
+    println!("------------------------------------------------------------------------------");
 
+    println!("Simulation begins...");
+
+    println!("Write the number of observatory to get the average time per image or 'q' to exit");
+    
+    
     loop {
         let mut line = String::new();
         io::stdin().read_line(&mut line).expect("Failed to read line!");
@@ -74,14 +80,14 @@ fn main() {
                 let mut running_val = running.lock().unwrap();
                 *running_val = false;
             }
+
             for mut handle in children {
                 handle.join().unwrap();
             }
+            println!("The End!");
             return;
         }
 
-        //or if user enters a number, print average time
-        //for the observatory with that number
         let input = user_input.parse::<usize>();
         match input {
             Ok(number) => { 
