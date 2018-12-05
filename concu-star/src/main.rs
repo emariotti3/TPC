@@ -20,7 +20,7 @@ fn main() {
 
     let mut avg_times = Vec::new();
     let running = Arc::new(Mutex::new(true));
-    let file = File::open("config.txt").expect("Configuration file not found!");
+    let file = File::open("../config.txt").expect("Configuration file not found!");
     let mut reader = BufReader::new(file);
     let mut first_line = String::new();
     let mut observatory_count = 0;    
